@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreditIQ — Loan Default Risk Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy:#0a2540; --navy-mid:#1a3a5c; --blue:#0066cc; --blue-light:#e8f0fb;
+    --green:#00875a; --green-light:#e3f5ee; --amber:#c97000; --amber-light:#fff3e0;
+    --red:#c0392b; --red-light:#fdecea;
+    --gray-50:#f8f9fa; --gray-100:#f0f2f5; --gray-200:#e1e5ea;
+    --gray-400:#8c9ab0; --gray-600:#4a5568; --gray-800:#1a2332;
+    --white:#ffffff; --border:#dde3ec;
+    --shadow-sm:0 1px 3px rgba(0,0,0,0.08);
+    --shadow:0 4px 16px rgba(10,37,64,0.10);
+    --shadow-lg:0 8px 32px rgba(10,37,64,0.14);
+    --radius:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--gray-50);color:var(--gray-800);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;}
+
+  /* NAV */
+  .topnav{background:var(--navy);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+  .nav-brand{display:flex;align-items:center;gap:10px;}
+  .nav-logo{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;}
+  .nav-name{font-size:16px;font-weight:600;color:white;}
+  .nav-name span{color:#6eb3ff;}
+  .nav-right{display:flex;align-items:center;gap:16px;}
+  .nav-analyst-label{font-size:10px;color:#7a9bc4;text-transform:uppercase;letter-spacing:0.06em;}
+  .nav-analyst-name{font-size:13px;font-weight:600;color:white;text-align:right;}
+  .nav-badge{background:rgba(0,102,204,0.3);border:1px solid rgba(110,179,255,0.3);color:#6eb3ff;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;}
+
+  /* HERO */
+  .hero-strip{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);padding:32px 40px;color:white;}
+  .hero-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+  .hero-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:600;margin-bottom:4px;}
+  .hero-sub{font-size:13px;color:#a0bcd8;}
+  .hero-stats{display:flex;gap:32px;}
+  .hero-stat-val{font-size:22px;font-weight:700;color:#6eb3ff;letter-spacing:-0.5px;}
+  .hero-stat-label{font-size:10px;color:#7a9bc4;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;}
+
+  /* TABS */
+  .tabs-bar{background:var(--white);border-bottom:1px solid var(--border);padding:0 40px;display:flex;}
+  .tab-btn{padding:14px 24px;font-size:13px;font-weight:500;color:var(--gray-400);border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;font-family:'Inter',sans-serif;}
+  .tab-btn:hover{color:var(--navy);}
+  .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  /* MAIN LAYOUT */
+  .main{max-width:1200px;margin:0 auto;padding:32px 40px 60px;display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;}
+  @media(max-width:900px){.main{grid-template-columns:1fr;padding:20px;}.hero-strip{padding:24px 20px;}.topnav{padding:0 20px;}.tabs-bar{padding:0 20px;}}
+
+  /* CARDS */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .card-header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .card-header-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--blue-light);color:var(--blue);flex-shrink:0;}
+  .card-title{font-size:13px;font-weight:600;color:var(--navy);}
+  .card-subtitle{font-size:11px;color:var(--gray-400);margin-left:auto;}
+  .card-body{padding:24px;}
+
+  /* FORM */
+  .section-label{font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;margin-top:24px;padding-bottom:8px;border-bottom:2px solid var(--blue-light);display:flex;align-items:center;gap:8px;}
+  .section-label:first-child{margin-top:0;}
+  .section-label::before{content:'';width:3px;height:12px;background:var(--blue);border-radius:2px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px;}
+  .form-grid.three{grid-template-columns:1fr 1fr 1fr;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field-label{font-size:11px;font-weight:600;color:var(--gray-600);display:flex;align-items:center;gap:5px;}
+  .field-hint{font-size:10px;color:var(--gray-400);}
+  .tooltip{position:relative;display:inline-flex;}
+  .tooltip-icon{width:14px;height:14px;background:var(--gray-200);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--gray-600);cursor:help;font-weight:700;flex-shrink:0;}
+  .tooltip-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--navy);color:white;font-size:11px;padding:8px 12px;border-radius:6px;max-width:220px;white-space:normal;line-height:1.4;z-index:50;box-shadow:var(--shadow-lg);pointer-events:none;}
+  .tooltip:hover .tooltip-text{display:block;}
+  .field input,.field select{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--gray-800);font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%;appearance:none;-webkit-appearance:none;}
+  .field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,102,204,0.12);}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238c9ab0' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer;}
+  .submit-row{margin-top:24px;display:flex;gap:12px;}
+  .btn-primary{flex:1;padding:13px 24px;background:var(--blue);color:white;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .btn-primary:hover{background:#0055aa;box-shadow:0 4px 12px rgba(0,102,204,0.3);transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+  .btn-reset{padding:13px 18px;background:var(--gray-100);color:var(--gray-600);border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+  .btn-reset:hover{background:var(--gray-200);}
+
+  /* RESULT PANEL */
+  .result-sticky{position:sticky;top:80px;}
+  .result-idle-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:40px 24px;text-align:center;box-shadow:var(--shadow-sm);margin-bottom:16px;}
+  .idle-illustration{width:64px;height:64px;background:var(--blue-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:28px;}
+  .idle-title{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+  .idle-sub{font-size:12px;color:var(--gray-400);line-height:1.5;}
+  .result-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:16px;display:none;}
+  .verdict-banner{padding:24px;text-align:center;border-bottom:1px solid var(--border);}
+  .verdict-banner.LOW{background:var(--green-light);}.verdict-banner.MEDIUM{background:var(--amber-light);}.verdict-banner.HIGH{background:var(--red-light);}
+  .verdict-icon{font-size:32px;margin-bottom:10px;}
+  .verdict-label{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 12px;border-radius:20px;margin-bottom:10px;}
+  .verdict-label.LOW{background:#b7edd8;color:var(--green);}.verdict-label.MEDIUM{background:#ffe0b2;color:var(--amber);}.verdict-label.HIGH{background:#fdc9c5;color:var(--red);}
+  .verdict-main{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;margin-bottom:4px;}
+  .verdict-main.LOW{color:var(--green);}.verdict-main.MEDIUM{color:var(--amber);}.verdict-main.HIGH{color:var(--red);}
+  .verdict-sub{font-size:12px;color:var(--gray-600);}
+  .prob-section{padding:20px 24px;border-bottom:1px solid var(--border);}
+  .prob-title{font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;display:block;}
+  .prob-number{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1;}
+  .prob-number.LOW{color:var(--green);}.prob-number.MEDIUM{color:var(--amber);}.prob-number.HIGH{color:var(--red);}
+  .prob-number sup{font-size:16px;font-weight:500;}
+  .gauge-track{height:8px;background:var(--gray-100);border-radius:4px;overflow:hidden;border:1px solid var(--border);margin-top:12px;}
+  .gauge-fill{height:100%;border-radius:4px;transition:width 0.9s cubic-bezier(0.16,1,0.3,1);width:0%;}
+  .gauge-fill.LOW{background:linear-gradient(90deg,#00b377,var(--green));}.gauge-fill.MEDIUM{background:linear-gradient(90deg,#ffb347,var(--amber));}.gauge-fill.HIGH{background:linear-gradient(90deg,#e74c3c,var(--red));}
+  .gauge-labels{display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--gray-400);}
+  .ratios-section{padding:16px 24px;}
+  .ratios-title{font-size:11px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;}
+  .ratio-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--gray-100);}
+  .ratio-item:last-child{border-bottom:none;}
+  .ratio-name{font-size:12px;color:var(--gray-600);}
+  .ratio-val{font-size:13px;font-weight:600;color:var(--navy);}
+
+  /* MODEL CARD */
+  .model-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .model-card-header{padding:12px 20px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;}
+  .model-card-title{font-size:12px;font-weight:600;color:white;}
+  .model-pill{background:rgba(110,179,255,0.2);color:#6eb3ff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
+  .model-stat-row{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-bottom:1px solid var(--gray-100);}
+  .model-stat-row:last-child{border-bottom:none;}
+  .model-stat-key{font-size:11px;color:var(--gray-600);}
+  .model-stat-val{font-size:12px;font-weight:600;color:var(--navy);}
+  .model-stat-val.highlight{color:var(--blue);}
+
+  /* ANALYTICS */
+  .analytics-main{max-width:1200px;margin:0 auto;padding:32px 40px 60px;}
+  .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:900px){.analytics-grid{grid-template-columns:1fr;}}
+  .chart-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .chart-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);}
+  .chart-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:2px;}
+  .chart-sub{font-size:11px;color:var(--gray-400);}
+  .chart-body{padding:16px 20px 20px;position:relative;height:260px;}
+  .insight-strip{background:var(--blue-light);border:1px solid #c5d9f5;border-radius:var(--radius);padding:18px 24px;margin-bottom:20px;display:flex;gap:40px;flex-wrap:wrap;align-items:center;}
+  .insight-val{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:-0.5px;}
+  .insight-label{font-size:11px;color:var(--gray-600);margin-top:2px;}
+  .insight-note{font-size:12px;color:var(--gray-600);line-height:1.6;margin-left:auto;max-width:340px;}
+
+  footer{background:var(--navy);color:#7a9bc4;text-align:center;padding:20px;font-size:11px;margin-top:40px;}
+  footer strong{color:white;}
+  .error-bar{background:var(--red-light);border:1px solid #fac9c5;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--red);margin-top:12px;display:none;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.4);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .animate-in{animation:fadeUp 0.35s ease forwards;}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-logo">CQ</div>
+    <div class="nav-name">Credit<span>IQ</span></div>
+  </div>
+  <div class="nav-right">
+    <div>
+      <div class="nav-analyst-label">Analyst</div>
+      <div class="nav-analyst-name">Nuray Arpa</div>
+    </div>
+    <div class="nav-badge">DS Portfolio</div>
+  </div>
+</nav>
+
+<div class="hero-strip">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-title">Loan Default Risk Assessment</div>
+      <div class="hero-sub">Home Credit Default Risk · XGBoost · 307,511 training samples</div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-val">0.766</div><div class="hero-stat-label">AUC-ROC</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">0.745</div><div class="hero-stat-label">Baseline LR</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">24</div><div class="hero-stat-label">Features</div></div>
+      <div class="hero-stat"><div class="hero-stat-val">66.7%</div><div class="hero-stat-label">Threshold</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('predictor', this)">🔍 Risk Predictor</button>
+  <button class="tab-btn" onclick="switchTab('analytics', this)">📊 Data Insights</button>
+</div>
+
+<!-- TAB: PREDICTOR -->
+<div id="tab-predictor" class="tab-content active">
+  <div class="main">
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-icon">📋</div>
+          <div class="card-title">Applicant Information</div>
+          <div class="card-subtitle">All fields required</div>
+        </div>
+        <div class="card-body">
+
+          <div class="section-label">Financial Profile</div>
+          <div class="form-grid">
+            <div class="field">
+              <div class="field-label">Annual Income ($) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Gross annual income of the applicant in USD.</div></div></div>
+              <input type="number" id="AMT_INCOME_TOTAL" value="150000" min="0">
+            </div>
+            <div class="field">
+              <div class="field-label">Loan Amount ($) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Total credit amount being requested by the applicant.</div></div></div>
+              <input type="number" id="AMT_CREDIT" value="500000" min="0">
+            </div>
+            <div class="field">
+              <div class="field-label">Annual Repayment ($) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Total yearly repayment obligation including principal and interest.</div></div></div>
+              <input type="number" id="AMT_ANNUITY" value="25000" min="0">
+            </div>
+            <div class="field">
+              <div class="field-label">Collateral Value ($) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Market value of goods or property securing the loan. Used to compute LTV ratio.</div></div></div>
+              <input type="number" id="AMT_GOODS_PRICE" value="450000" min="0">
+            </div>
+          </div>
+
+          <div class="section-label">Credit Bureau Scores</div>
+          <div class="form-grid three">
+            <div class="field">
+              <div class="field-label">Bureau Score 1 <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Normalized credit score from Bureau 1 (e.g. Experian). 0.0 = highest risk, 1.0 = lowest risk. This is the single most predictive feature in the model.</div></div></div>
+              <input type="number" id="EXT_SOURCE_1" value="0.50" step="0.01" min="0" max="1">
+              <div class="field-hint">0.0 (high risk) → 1.0 (low risk)</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Bureau Score 2 <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Normalized credit score from Bureau 2 (e.g. Equifax). 0.0 = highest risk, 1.0 = lowest risk.</div></div></div>
+              <input type="number" id="EXT_SOURCE_2" value="0.55" step="0.01" min="0" max="1">
+              <div class="field-hint">0.0 (high risk) → 1.0 (low risk)</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Bureau Score 3 <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Normalized credit score from Bureau 3 (e.g. TransUnion). 0.0 = highest risk, 1.0 = lowest risk.</div></div></div>
+              <input type="number" id="EXT_SOURCE_3" value="0.50" step="0.01" min="0" max="1">
+              <div class="field-hint">0.0 (high risk) → 1.0 (low risk)</div>
+            </div>
+          </div>
+
+          <div class="section-label">Personal & Employment</div>
+          <div class="form-grid">
+            <div class="field">
+              <div class="field-label">Age (years)</div>
+              <input type="number" id="DAYS_BIRTH_YEARS" value="35" min="18" max="70">
+            </div>
+            <div class="field">
+              <div class="field-label">Years Employed <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Number of years at current employer. Enter 0 if unemployed.</div></div></div>
+              <input type="number" id="DAYS_EMPLOYED_YEARS" value="5" min="0" max="50">
+            </div>
+            <div class="field">
+              <div class="field-label">Gender</div>
+              <select id="CODE_GENDER"><option value="F">Female</option><option value="M">Male</option></select>
+            </div>
+            <div class="field">
+              <div class="field-label">Education Level</div>
+              <select id="NAME_EDUCATION_TYPE">
+                <option value="Secondary / secondary special">Secondary</option>
+                <option value="Higher education">Higher Education</option>
+                <option value="Incomplete higher">Incomplete Higher</option>
+                <option value="Lower secondary">Lower Secondary</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="field-label">Income Type</div>
+              <select id="NAME_INCOME_TYPE">
+                <option value="Working">Working</option>
+                <option value="Commercial associate">Commercial Associate</option>
+                <option value="Pensioner">Pensioner</option>
+                <option value="State servant">State Servant</option>
+                <option value="Unemployed">Unemployed</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="field-label">Family Status</div>
+              <select id="NAME_FAMILY_STATUS">
+                <option value="Married">Married</option>
+                <option value="Single / not married">Single</option>
+                <option value="Civil marriage">Civil Marriage</option>
+                <option value="Separated">Separated</option>
+                <option value="Widow">Widow</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="section-label">Loan & Administrative Details</div>
+          <div class="form-grid">
+            <div class="field">
+              <div class="field-label">Contract Type</div>
+              <select id="NAME_CONTRACT_TYPE"><option value="Cash loans">Cash Loans</option><option value="Revolving loans">Revolving Loans</option></select>
+            </div>
+            <div class="field">
+              <div class="field-label">Owns a Car</div>
+              <select id="FLAG_OWN_CAR"><option value="N">No</option><option value="Y">Yes</option></select>
+            </div>
+            <div class="field">
+              <div class="field-label">Region Risk Rating <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Internal bank rating of the client's region. 1 = lowest risk region, 3 = highest risk region.</div></div></div>
+              <select id="REGION_RATING_CLIENT">
+                <option value="1">1 — Low Risk Region</option>
+                <option value="2" selected>2 — Medium Risk Region</option>
+                <option value="3">3 — High Risk Region</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="field-label">ID Document Age (days) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Days since the client's ID was last published/updated. Enter as a negative number — e.g. -500 means the ID was updated 500 days ago. More recent = closer to 0.</div></div></div>
+              <input type="number" id="DAYS_ID_PUBLISH" value="-1000" max="0">
+              <div class="field-hint">Negative integer (e.g. -500)</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Registration Age (days) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Days since the client first registered in the system. Enter as a negative number — e.g. -2000 means they registered 2000 days ago.</div></div></div>
+              <input type="number" id="DAYS_REGISTRATION" value="-2000" max="0">
+              <div class="field-hint">Negative integer (e.g. -2000)</div>
+            </div>
+          </div>
+
+          <div class="submit-row">
+            <button class="btn-primary" id="submitBtn" onclick="predict()">Run Risk Assessment</button>
+            <button class="btn-reset" onclick="resetForm()">Reset</button>
+          </div>
+          <div class="error-bar" id="errorMsg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="result-sticky">
+      <div class="result-idle-card" id="idleCard">
+        <div class="idle-illustration">📊</div>
+        <div class="idle-title">Awaiting Assessment</div>
+        <div class="idle-sub">Complete the application form and click <strong>Run Risk Assessment</strong> to generate a default probability score.</div>
+      </div>
+      <div class="result-card" id="resultCard">
+        <div class="verdict-banner" id="verdictBanner">
+          <div class="verdict-icon" id="verdictIcon"></div>
+          <div class="verdict-label" id="verdictLabel"></div>
+          <div class="verdict-main" id="verdictMain"></div>
+          <div class="verdict-sub" id="verdictSub"></div>
+        </div>
+        <div class="prob-section">
+          <span class="prob-title">Default Probability</span>
+          <div class="prob-number" id="probNumber">—</div>
+          <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
+          <div class="gauge-labels"><span>0%</span><span>Threshold: 66.7%</span><span>100%</span></div>
+        </div>
+        <div class="ratios-section">
+          <div class="ratios-title">Computed Risk Ratios</div>
+          <div id="ratiosGrid"></div>
+        </div>
+      </div>
+      <div class="model-card">
+        <div class="model-card-header"><span class="model-card-title">Model Information</span><span class="model-pill">XGBoost</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">AUC-ROC</span><span class="model-stat-val highlight">0.7660</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">Baseline (Log. Reg.)</span><span class="model-stat-val">0.7449</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">Estimators</span><span class="model-stat-val">287 (early stopping)</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">Top Feature</span><span class="model-stat-val highlight">EXT_SOURCE_MEAN ★</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">Class Imbalance</span><span class="model-stat-val">92/8 → scale_pos_weight</span></div>
+        <div class="model-stat-row"><span class="model-stat-key">Dataset</span><span class="model-stat-val">Home Credit · Kaggle</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: ANALYTICS -->
+<div id="tab-analytics" class="tab-content">
+  <div class="analytics-main">
+
+    <div class="insight-strip">
+      <div>
+        <div class="insight-val">8.1%</div>
+        <div class="insight-label">Overall Default Rate</div>
+      </div>
+      <div>
+        <div class="insight-val">307,511</div>
+        <div class="insight-label">Total Applicants</div>
+      </div>
+      <div>
+        <div class="insight-val">24,825</div>
+        <div class="insight-label">Defaults in Dataset</div>
+      </div>
+      <div class="insight-note">
+        Charts below show default rates computed from the full training dataset (307k applicants). These patterns directly informed the feature engineering choices in the model.
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by Education Level</div>
+          <div class="chart-sub">Academic degree holders default at 5× lower rate than secondary</div>
+        </div>
+        <div class="chart-body"><canvas id="chartEducation"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by Income Type</div>
+          <div class="chart-sub">Maternity leave and unemployed show significantly elevated risk</div>
+        </div>
+        <div class="chart-body"><canvas id="chartIncome"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by Age Group</div>
+          <div class="chart-sub">Younger applicants carry substantially higher default risk</div>
+        </div>
+        <div class="chart-body"><canvas id="chartAge"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by DTI Bucket</div>
+          <div class="chart-sub">Debt-to-income ratio shows non-linear relationship with default</div>
+        </div>
+        <div class="chart-body"><canvas id="chartDTI"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by Gender</div>
+          <div class="chart-sub">Male applicants default at ~44% higher rate than female</div>
+        </div>
+        <div class="chart-body"><canvas id="chartGender"></canvas></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Default Rate by Contract Type</div>
+          <div class="chart-sub">Cash loans carry higher default risk than revolving credit</div>
+        </div>
+        <div class="chart-body"><canvas id="chartContract"></canvas></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  Built by <strong>Nuray Arpa</strong> · Data Science Portfolio · XGBoost Credit Default Risk Model · Home Credit Dataset
+</footer>
+
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'analytics' && !window.chartsBuilt) buildCharts();
+}
+
+// ── Predictor ─────────────────────────────────────────────────────────────
+async function predict() {
+  const btn = document.getElementById('submitBtn');
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+  const payload = {
+    AMT_INCOME_TOTAL: +document.getElementById('AMT_INCOME_TOTAL').value,
+    AMT_CREDIT: +document.getElementById('AMT_CREDIT').value,
+    AMT_ANNUITY: +document.getElementById('AMT_ANNUITY').value,
+    AMT_GOODS_PRICE: +document.getElementById('AMT_GOODS_PRICE').value,
+    DAYS_BIRTH_YEARS: +document.getElementById('DAYS_BIRTH_YEARS').value,
+    DAYS_EMPLOYED_YEARS: +document.getElementById('DAYS_EMPLOYED_YEARS').value,
+    EXT_SOURCE_1: +document.getElementById('EXT_SOURCE_1').value,
+    EXT_SOURCE_2: +document.getElementById('EXT_SOURCE_2').value,
+    EXT_SOURCE_3: +document.getElementById('EXT_SOURCE_3').value,
+    CNT_CHILDREN: 0, CNT_FAM_MEMBERS: 2,
+    REGION_RATING_CLIENT: +document.getElementById('REGION_RATING_CLIENT').value,
+    DAYS_ID_PUBLISH: +document.getElementById('DAYS_ID_PUBLISH').value,
+    DAYS_REGISTRATION: +document.getElementById('DAYS_REGISTRATION').value,
+    CODE_GENDER: document.getElementById('CODE_GENDER').value,
+    NAME_CONTRACT_TYPE: document.getElementById('NAME_CONTRACT_TYPE').value,
+    FLAG_OWN_CAR: document.getElementById('FLAG_OWN_CAR').value,
+    FLAG_OWN_REALTY: 'Y',
+    NAME_INCOME_TYPE: document.getElementById('NAME_INCOME_TYPE').value,
+    NAME_EDUCATION_TYPE: document.getElementById('NAME_EDUCATION_TYPE').value,
+    NAME_FAMILY_STATUS: document.getElementById('NAME_FAMILY_STATUS').value,
+    NAME_HOUSING_TYPE: 'House / apartment',
+    OCCUPATION_TYPE: 'Unknown',
+  };
+
+  try {
+    const res = await fetch('/api/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    showResult(await res.json());
+  } catch(err) {
+    errEl.textContent = '⚠ ' + err.message + ' — Is the API server running?';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Run Risk Assessment';
+  }
+}
+
+function showResult(data) {
+  const { probability, risk, verdict, ratios } = data;
+  document.getElementById('idleCard').style.display = 'none';
+  const rc = document.getElementById('resultCard');
+  rc.style.display = 'block';
+  rc.classList.add('animate-in');
+
+  const icons = { LOW:'✅', MEDIUM:'⚠️', HIGH:'❌' };
+  const subs = { LOW:'Low default probability. Proceed with standard review.', MEDIUM:'Elevated risk detected. Additional review recommended.', HIGH:'High default probability. Application requires escalation.' };
+
+  document.getElementById('verdictBanner').className = 'verdict-banner ' + risk;
+  document.getElementById('verdictIcon').textContent = icons[risk];
+  document.getElementById('verdictLabel').className = 'verdict-label ' + risk;
+  document.getElementById('verdictLabel').textContent = risk + ' RISK';
+  document.getElementById('verdictMain').className = 'verdict-main ' + risk;
+  document.getElementById('verdictMain').textContent = verdict;
+  document.getElementById('verdictSub').textContent = subs[risk];
+
+  const pn = document.getElementById('probNumber');
+  pn.className = 'prob-number ' + risk;
+  pn.innerHTML = probability + '<sup>%</sup>';
+
+  const fill = document.getElementById('gaugeFill');
+  fill.className = 'gauge-fill ' + risk;
+  setTimeout(() => { fill.style.width = Math.min(probability, 100) + '%'; }, 50);
+
+  const ratioLabels = { 'DTI Ratio':'Debt-to-Income', 'LTV Ratio':'Loan-to-Value', 'Credit/Income':'Credit / Income', 'EXT Score':'Avg. Bureau Score' };
+  document.getElementById('ratiosGrid').innerHTML = Object.entries(ratios).map(([k,v]) =>
+    `<div class="ratio-item"><span class="ratio-name">${ratioLabels[k]||k}</span><span class="ratio-val">${k==='DTI Ratio'?v+'%':v}</span></div>`
+  ).join('');
+}
+
+function resetForm() {
+  document.getElementById('idleCard').style.display = 'block';
+  document.getElementById('resultCard').style.display = 'none';
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+// ── Analytics Charts ──────────────────────────────────────────────────────
+window.chartsBuilt = false;
+
+function buildCharts() {
+  window.chartsBuilt = true;
+
+  const BLUE = '#0066cc', NAVY = '#0a2540';
+  const barColor = (vals) => vals.map(v => v > 0.15 ? '#c0392b' : v > 0.08 ? '#c97000' : '#00875a');
+  const pct = (v) => (v * 100).toFixed(1) + '%';
+
+  const defaults = {
+    type: 'bar',
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + (ctx.raw * 100).toFixed(1) + '% default rate' } } },
+      scales: {
+        y: { ticks: { callback: v => (v*100).toFixed(0)+'%', font:{size:11} }, grid:{color:'#f0f2f5'}, border:{dash:[4,4]} },
+        x: { ticks: { font:{size:11} }, grid:{display:false} }
+      }
+    }
+  };
+
+  // Education
+  const eduData = { 'Academic': 0.018, 'Higher Ed': 0.054, 'Incomplete Higher': 0.085, 'Lower Secondary': 0.109, 'Secondary': 0.089 };
+  new Chart(document.getElementById('chartEducation'), { ...defaults, data: { labels: Object.keys(eduData), datasets: [{ data: Object.values(eduData), backgroundColor: barColor(Object.values(eduData)), borderRadius: 6, borderSkipped: false }] } });
+
+  // Income type (exclude Businessman/Student with 0)
+  const incData = { 'Working': 0.096, 'Commercial': 0.075, 'State Servant': 0.058, 'Pensioner': 0.054, 'Unemployed': 0.364, 'Maternity Leave': 0.4 };
+  new Chart(document.getElementById('chartIncome'), { ...defaults, data: { labels: Object.keys(incData), datasets: [{ data: Object.values(incData), backgroundColor: barColor(Object.values(incData)), borderRadius: 6, borderSkipped: false }] } });
+
+  // Age
+  const ageData = { '18–25': 0.123, '26–35': 0.107, '36–45': 0.084, '46–55': 0.071, '55+': 0.052 };
+  new Chart(document.getElementById('chartAge'), { ...defaults, data: { labels: Object.keys(ageData), datasets: [{ data: Object.values(ageData), backgroundColor: barColor(Object.values(ageData)), borderRadius: 6, borderSkipped: false }] } });
+
+  // DTI
+  const dtiData = { '<10%': 0.072, '10–20%': 0.081, '20–30%': 0.088, '30–40%': 0.081, '>40%': 0.083 };
+  new Chart(document.getElementById('chartDTI'), { ...defaults, data: { labels: Object.keys(dtiData), datasets: [{ data: Object.values(dtiData), backgroundColor: barColor(Object.values(dtiData)), borderRadius: 6, borderSkipped: false }] } });
+
+  // Gender
+  const genData = { 'Female': 0.070, 'Male': 0.101 };
+  new Chart(document.getElementById('chartGender'), { ...defaults, data: { labels: Object.keys(genData), datasets: [{ data: Object.values(genData), backgroundColor: barColor(Object.values(genData)), borderRadius: 6, borderSkipped: false }] } });
+
+  // Contract
+  const conData = { 'Cash Loans': 0.083, 'Revolving Loans': 0.055 };
+  new Chart(document.getElementById('chartContract'), { ...defaults, data: { labels: Object.keys(conData), datasets: [{ data: Object.values(conData), backgroundColor: barColor(Object.values(conData)), borderRadius: 6, borderSkipped: false }] } });
+}
+</script>
+</body>
+</html>
