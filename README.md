@@ -139,10 +139,7 @@ uvicorn api.index:app --reload
 
 ## 👤 Author
 
-**Nuray Arpa** — Data Scientist  
-MSc Fintech, Risks & Investment Analysis (Distinction, Top 5%) — University of Sussex  
-BSc Mathematics & Economics — University of London  
-3+ years experience in financial analysis (EY, VIP Payments)
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Nuray_Arpa-0077B5?style=flat&logo=linkedin)](https://linkedin.com/in/nurayarpa)
-[![GitHub](https://img.shields.io/badge/GitHub-nurayarpa-181717?style=flat&logo=github)](https://github.com/nurayarpa)
+**Nuray Arpa**
+* 📧 nuray.m.arpa@gmail.com
+* 💼 [LinkedIn](https://linkedin.com/in/nurayarpa)
+* 🐙 [GitHub](https://github.com/nurayarpa)
