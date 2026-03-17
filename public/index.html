@@ -294,18 +294,20 @@
               <select id="FLAG_OWN_CAR"><option value="N">No</option><option value="Y">Yes</option></select>
             </div>
             <div class="field">
-              <div class="field-label">Client Region Rating <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Internal bank rating of the client's region. 1 = lowest risk region, 3 = highest risk region.</div></div></div>
+              <div class="field-label">Region Risk Rating <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Internal bank rating of the client's region. 1 = lowest risk region, 3 = highest risk region.</div></div></div>
               <select id="REGION_RATING_CLIENT">
                 <option value="1">1 — Low Risk Region</option>
                 <option value="2" selected>2 — Medium Risk Region</option>
                 <option value="3">3 — High Risk Region</option>
               </select>
             </div>
-            </div>
+            <div class="field">
+              <div class="field-label">ID Document Age (days) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Days since the client's ID was last published/updated. Enter as a negative number — e.g. -500 means the ID was updated 500 days ago. More recent = closer to 0.</div></div></div>
               <input type="number" id="DAYS_ID_PUBLISH" value="-1000" max="0">
               <div class="field-hint">Negative integer (e.g. -500)</div>
             </div>
-            </div>
+            <div class="field">
+              <div class="field-label">Registration Age (days) <div class="tooltip"><div class="tooltip-icon">?</div><div class="tooltip-text">Days since the client first registered in the system. Enter as a negative number — e.g. -2000 means they registered 2000 days ago.</div></div></div>
               <input type="number" id="DAYS_REGISTRATION" value="-2000" max="0">
               <div class="field-hint">Negative integer (e.g. -2000)</div>
             </div>
@@ -468,8 +470,8 @@ async function predict() {
     EXT_SOURCE_3: +document.getElementById('EXT_SOURCE_3').value,
     CNT_CHILDREN: 0, CNT_FAM_MEMBERS: 2,
     REGION_RATING_CLIENT: +document.getElementById('REGION_RATING_CLIENT').value,
-    DAYS_ID_PUBLISH: -1134,
-    DAYS_REGISTRATION: -3648,
+    DAYS_ID_PUBLISH: +document.getElementById('DAYS_ID_PUBLISH').value,
+    DAYS_REGISTRATION: +document.getElementById('DAYS_REGISTRATION').value,
     CODE_GENDER: document.getElementById('CODE_GENDER').value,
     NAME_CONTRACT_TYPE: document.getElementById('NAME_CONTRACT_TYPE').value,
     FLAG_OWN_CAR: document.getElementById('FLAG_OWN_CAR').value,
